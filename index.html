@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CODE INVADERS — CORE Defense Terminal</title>
+  <meta name="description" content="A high-velocity typing tutor defense game. Neutralize falling code tokens before core breach.">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<div id="stage">
+  <!-- Matrix Code Rain Canvas -->
+  <canvas id="codeRain"></canvas>
+
+  <!-- Visual Overlay Effects -->
+  <div id="scanlines"></div>
+  <div id="vignette"></div>
+  <div id="flicker"></div>
+  <!-- BOOT / INTRO SCREEN -->
+  <div id="boot">
+    <!-- TOP HEADER BAR -->
+    <div id="bootControls" class="boot-controls">
+      <div class="player-profile-bar">
+        <span class="player-label">ACTIVE OPERATOR:</span>
+        <span id="activePlayerTag" class="active-player-tag">👤 OPERATOR_1</span>
+        <button id="btnSwitchPlayer" class="btn-profile-switch">CHANGE NAME</button>
+      </div>
+
+      <div class="theme-selector-bar">
+        <button id="btnStats" class="btn-profile-switch">📊 STATS</button>
+        <button id="btnTrophies" class="btn-profile-switch">🏆 TROPHIES</button>
+        <button id="btnBootSettings" class="btn-profile-switch">⚙️ SETTINGS</button>
+      </div>
+    </div>
+
+    <div id="bootLines"></div>
+    <div id="titleBlock">
+      <div id="gameTitle">CODE INVADERS</div>
+      <div id="gameSub">// CORE DEFENSE TERMINAL v2.4</div>
+      
+      <!-- WORD PACK SELECTOR PILLS -->
+      <div id="wordPackSelector" class="word-pack-selector">
+        <span class="pack-label">LANGUAGE PACK:</span>
+        <button class="pack-pill active" data-pack="jsts">JS / TS</button>
+        <button class="pack-pill" data-pack="python">PYTHON</button>
+        <button class="pack-pill" data-pack="react">REACT</button>
+        <button class="pack-pill" data-pack="rust">RUST</button>
+        <button class="pack-pill" data-pack="sql">SQL</button>
+        <button class="pack-pill" data-pack="css">CSS</button>
+      </div>
+    </div>
+
+    <div id="modeSelect">
+      <div class="mode-card" data-mode="easy" tabindex="0">
+        <div class="mode-tag">CHAPTER 0 · TRAINING</div>
+        <div class="mode-name">EASY — SYSTEM TRAINING</div>
+        <div class="mode-desc">The defense system is still calibrating. Learn to identify, type, and purge basic fragments before the real invasion begins.</div>
+        <div id="hs-easy" class="mode-high-score">BEST SCORE: 0</div>
+      </div>
+      <div class="mode-card" data-mode="normal" tabindex="0">
+        <div class="mode-tag">CHAPTER 1 · INVASION</div>
+        <div class="mode-name">NORMAL — THE REAL INVASION</div>
+        <div class="mode-desc">Sophisticated fragments are breaching the outer layers. Multiple threats, faster descent — you are no longer learning, you are defending.</div>
+        <div id="hs-normal" class="mode-high-score">BEST SCORE: 0</div>
+      </div>
+      <div class="mode-card" data-mode="hard" tabindex="0">
+        <div class="mode-tag">CHAPTER 2 · CORE BREACH</div>
+        <div class="mode-name">HARD — CORE BREACH</div>
+        <div class="mode-desc">The deepest systems are compromised. Complex, high-priority fragments flood the terminal. Stop the invasion before the CORE collapses.</div>
+        <div id="hs-hard" class="mode-high-score">BEST SCORE: 0</div>
+      </div>
+      <div class="mode-card zen-card" data-mode="zen" tabindex="0">
+        <div class="mode-tag">CHAPTER ∞ · PRACTICE</div>
+        <div class="mode-name">ZEN — INFINITE DEFENSE</div>
+        <div class="mode-desc">Endless typing practice with infinite core integrity. Perfect for warming up and improving touch typing speed without game overs.</div>
+        <div id="hs-zen" class="mode-high-score">ZEN MODE</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- HUD BAR -->
+  <div id="hud">
+    <div class="hud-block">
+      <div class="hud-label">CORE INTEGRITY</div>
+      <div id="integrity">♥ ♥ ♥</div>
+    </div>
+    
+    <div class="hud-block" style="align-items:center;">
+      <div class="hud-label">CORRUPTION PURGED</div>
+      <div id="scoreVal">0</div>
+      <div id="comboVal"></div>
+    </div>
+
+    <div class="hud-block" style="align-items:center;">
+      <div class="hud-label">SPEED WPM</div>
+      <div id="wpmVal">0</div>
+    </div>
+
+    <div class="hud-block" style="align-items:center;">
+      <div class="hud-label">ACCURACY</div>
+      <div id="accuracyVal">100%</div>
+    </div>
+
+    <div id="empHudBlock" class="emp-hud-block">
+      <div class="hud-label">EMP [TAB]</div>
+      <div class="emp-bar-wrap">
+        <div id="empBarFill" class="emp-bar-fill"></div>
+      </div>
+      <span id="empReadyText" class="emp-ready-text" style="display:none;">READY!</span>
+    </div>
+
+    <div class="hud-block" style="align-items:flex-end;">
+      <div class="hud-label" id="waveLabel">DEPTH</div>
+      <div id="waveVal">01</div>
+    </div>
+
+    <div class="hud-btn-group">
+      <button id="btnSettings" class="btn-ctrl">⚙️ SETTINGS</button>
+      <button id="btnPause" class="btn-ctrl">PAUSE [ESC]</button>
+      <button id="btnMute" class="btn-ctrl">SOUND: ON</button>
+    </div>
+  </div>
+
+  <!-- TOAST NOTIFICATIONS -->
+  <div id="toastWrap"></div>
+
+  <!-- PLAYFIELD -->
+  <div id="field"></div>
+
+  <!-- TERMINAL INPUT -->
+  <div id="terminal">
+    <span id="prompt">&gt;</span>
+    <input id="typedInput" type="text" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" placeholder="TYPE TARGET CODE NAME OR 'EMP'...">
+    <span id="terminalHint">AUTO-PURGE ON MATCH</span>
+  </div>
+
+  <!-- PAUSE MODAL -->
+  <div id="pauseScreen">
+    <h2 class="pause-title">SYSTEM PAUSED</h2>
+    <div id="gameSub" style="margin-bottom:24px;">DEFENSE GRID HALTED</div>
+    <div class="btn-group-row">
+      <button id="btnResume" class="btn-secondary-action">RESUME MISSION [ESC]</button>
+      <button id="btnAbort" class="btn-abort">ABORT TO MENU</button>
+    </div>
+  </div>
+
+  <!-- END SCREEN (GAME OVER / WIN) -->
+  <div id="endScreen">
+    <div class="end-card">
+      <div id="endTitle">CORE BREACHED</div>
+      <div id="goHsBanner" class="high-score-banner" style="display:none;">★ NEW HIGH SCORE ACHIEVED! ★</div>
+      <div id="endStats"></div>
+      <div class="btn-group-row">
+        <button id="retryBtn">RETRY MISSION</button>
+        <button id="btnChangeMode" class="btn-secondary-action">SELECT MODE</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- PLAYER SWITCHER MODAL -->
+  <div id="playerModal" class="player-modal">
+    <div class="player-modal-card">
+      <h2 class="player-modal-title">OPERATOR IDENTITY MANAGEMENT</h2>
+      <div class="player-modal-sub">SELECT AVATAR & OPERATOR HANDLE</div>
+
+      <div class="player-list-label">CHOOSE AVATAR ICON:</div>
+      <div id="avatarPickerGrid" class="avatar-picker-grid"></div>
+      
+      <div class="player-input-row" style="margin-top:12px;">
+        <input id="playerHandleInput" type="text" maxlength="16" placeholder="ENTER OPERATOR TAG...">
+        <button id="btnRandomName" class="btn-random-name" title="Generate Relatable Cyber Handle">🎲 REFRESH</button>
+        <button id="btnCreatePlayer" class="btn-create-player">+ SAVE</button>
+      </div>
+
+      <div class="player-list-label">SAVED LOCAL OPERATORS:</div>
+      <div id="playerList" class="player-list"></div>
+
+      <div class="btn-group-row" style="margin-top:20px;">
+        <button id="btnClosePlayerModal" class="btn-secondary-action">CLOSE TERMINAL</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- SYSTEM SETTINGS MODAL -->
+  <div id="settingsModal" class="settings-modal">
+    <div class="settings-modal-card">
+      <h2 class="settings-modal-title">⚙️ SYSTEM CONFIGURATION</h2>
+      <div class="settings-modal-sub">CUSTOMIZE DEFENSE TERMINAL SETTINGS</div>
+
+      <div class="setting-group">
+        <label class="setting-label">TERMINAL VISUAL THEME</label>
+        <div class="theme-btn-grid">
+          <button class="btn-theme active" data-theme="cyberpunk">NEON CYBERPUNK</button>
+          <button class="btn-theme" data-theme="matrix">MATRIX GREEN</button>
+          <button class="btn-theme" data-theme="amber">RETRO AMBER</button>
+          <button class="btn-theme" data-theme="blood">BLOOD HACK</button>
+        </div>
+      </div>
+
+      <div class="setting-group">
+        <label class="setting-label">AUDIO & SOUND</label>
+        <div class="setting-row">
+          <span>SOUND EFFECTS (SFX)</span>
+          <button id="btnToggleSfx" class="btn-setting-toggle">SFX: ON</button>
+        </div>
+        <div class="setting-row">
+          <span>AMBIENT SYNTH MUSIC</span>
+          <button id="btnToggleMusic" class="btn-setting-toggle">MUSIC: ON</button>
+        </div>
+        <div class="setting-row">
+          <span>MUSIC VOLUME</span>
+          <input id="musicVolumeSlider" type="range" min="0" max="1" step="0.05" value="0.35">
+        </div>
+      </div>
+
+      <div class="setting-group">
+        <label class="setting-label">DISPLAY FILTERS</label>
+        <div class="setting-row">
+          <span>CRT SCANLINE EFFECT</span>
+          <button id="btnToggleCrtModal" class="btn-setting-toggle">CRT: ON</button>
+        </div>
+      </div>
+
+      <div class="btn-group-row" style="margin-top:20px;">
+        <button id="btnCloseSettings" class="btn-secondary-action">CLOSE SETTINGS</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- TROPHY ROOM MODAL -->
+  <div id="trophyModal" class="trophy-modal">
+    <div class="trophy-modal-card">
+      <h2 class="trophy-modal-title">🏆 OPERATOR TROPHY ROOM</h2>
+      <div class="trophy-modal-sub">UNLOCKABLE MISSION ACHIEVEMENTS & BADGES</div>
+
+      <div id="trophyGrid" class="trophy-grid"></div>
+
+      <div class="btn-group-row" style="margin-top:20px;">
+        <button id="btnCloseTrophies" class="btn-secondary-action">CLOSE TROPHY ROOM</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- CAREER STATS MODAL -->
+  <div id="statsModal" class="stats-modal">
+    <div class="stats-modal-card">
+      <h2 class="stats-modal-title">📊 OPERATOR CAREER STATS</h2>
+      <div class="stats-modal-sub">LIFETIME DEFENSE PERFORMANCE & METRICS</div>
+
+      <div id="statsGrid" class="career-stats-grid"></div>
+
+      <div class="btn-group-row" style="margin-top:20px;">
+        <button id="btnCloseStats" class="btn-secondary-action">CLOSE STATS</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SCRIPTS -->
+<script src="js/config.js"></script>
+<script src="js/audio.js"></script>
+<script src="js/rain.js"></script>
+<script src="js/game.js"></script>
+
+</body>
+</html>
