@@ -17,14 +17,43 @@
   <div id="scanlines"></div>
   <div id="vignette"></div>
   <div id="flicker"></div>
-
   <!-- BOOT / INTRO SCREEN -->
   <div id="boot">
+    <!-- TOP HEADER BAR -->
+    <div id="bootControls" class="boot-controls">
+      <div class="player-profile-bar">
+        <span class="player-label">ACTIVE OPERATOR:</span>
+        <span id="activePlayerTag" class="active-player-tag">👤 OPERATOR_1</span>
+        <button id="btnSwitchPlayer" class="btn-profile-switch">CHANGE NAME</button>
+      </div>
+
+      <div class="theme-selector-bar">
+        <button id="btnStats" class="btn-profile-switch">📊 STATS</button>
+        <button id="btnTrophies" class="btn-profile-switch">🏆 TROPHIES</button>
+        <button id="btnBootSettings" class="btn-profile-switch">⚙️ SETTINGS</button>
+      </div>
+    </div>
+
     <div id="bootLines"></div>
     <div id="titleBlock">
       <div id="gameTitle">CODE INVADERS</div>
-      <div id="gameSub">DEFEND THE CORE</div>
+      <div id="gameSub">// CORE DEFENSE TERMINAL v2.4</div>
+      
+      <!-- WORD PACK SELECTOR PILLS -->
+      <div id="wordPackSelector" class="word-pack-selector">
+        <span class="pack-label">LANGUAGE PACK:</span>
+        <div id="packPillsContainer" class="pack-pills-container">
+          <button class="pack-pill active" data-pack="jsts">JS / TS</button>
+          <button class="pack-pill" data-pack="python">PYTHON</button>
+          <button class="pack-pill" data-pack="react">REACT</button>
+          <button class="pack-pill" data-pack="rust">RUST</button>
+          <button class="pack-pill" data-pack="sql">SQL</button>
+          <button class="pack-pill" data-pack="css">CSS</button>
+        </div>
+        <button id="btnCustomPackModal" class="btn-custom-pack-pill" title="Create or Load Custom Code Pack">+ CUSTOM PACK</button>
+      </div>
     </div>
+
     <div id="modeSelect">
       <div class="mode-card" data-mode="easy" tabindex="0">
         <div class="mode-tag">CHAPTER 0 · TRAINING</div>
@@ -44,20 +73,48 @@
         <div class="mode-desc">The deepest systems are compromised. Complex, high-priority fragments flood the terminal. Stop the invasion before the CORE collapses.</div>
         <div id="hs-hard" class="mode-high-score">BEST SCORE: 0</div>
       </div>
+      <div class="mode-card survival-card" data-mode="survival" tabindex="0">
+        <div class="mode-tag">CHAPTER ⚡ · TIME ATTACK</div>
+        <div class="mode-name">SURVIVAL — TIME ATTACK</div>
+        <div class="mode-desc">Adrenaline rush! 60s countdown clock. Neutralize corruption tokens for +2s bonus; mistakes cost -1s penalty.</div>
+        <div id="hs-survival" class="mode-high-score">BEST SURVIVED: 0s</div>
+      </div>
+      <div class="mode-card zen-card" data-mode="zen" tabindex="0">
+        <div class="mode-tag">CHAPTER ∞ · PRACTICE</div>
+        <div class="mode-name">ZEN — INFINITE DEFENSE</div>
+        <div class="mode-desc">Endless typing practice with infinite core integrity. Perfect for warming up and improving touch typing speed without game overs.</div>
+        <div id="hs-zen" class="mode-high-score">ZEN MODE</div>
+      </div>
     </div>
   </div>
 
   <!-- HUD BAR -->
   <div id="hud">
-    <div class="hud-block">
+    <div id="integrityHudBlock" class="hud-block">
       <div class="hud-label">CORE INTEGRITY</div>
       <div id="integrity">♥ ♥ ♥</div>
+    </div>
+
+    <!-- TIME ATTACK TIMER HUD -->
+    <div id="timerHudBlock" class="hud-block timer-hud-block" style="display:none;">
+      <div class="hud-label">TIME REMAINING</div>
+      <div id="timerVal" class="timer-val">60.0s</div>
     </div>
     
     <div class="hud-block" style="align-items:center;">
       <div class="hud-label">CORRUPTION PURGED</div>
       <div id="scoreVal">0</div>
       <div id="comboVal"></div>
+    </div>
+
+    <div class="hud-block" style="align-items:center;">
+      <div class="hud-label">SPEED WPM</div>
+      <div id="wpmVal">0</div>
+    </div>
+
+    <div class="hud-block" style="align-items:center;">
+      <div class="hud-label">ACCURACY</div>
+      <div id="accuracyVal">100%</div>
     </div>
 
     <div id="empHudBlock" class="emp-hud-block">
@@ -74,9 +131,24 @@
     </div>
 
     <div class="hud-btn-group">
-      <button id="btnCrt" class="btn-ctrl">CRT: ON</button>
+      <button id="btnSettings" class="btn-ctrl">⚙️ SETTINGS</button>
       <button id="btnPause" class="btn-ctrl">PAUSE [ESC]</button>
       <button id="btnMute" class="btn-ctrl">SOUND: ON</button>
+    </div>
+  </div>
+
+  <!-- BOSS HEALTH BAR OVERLAY -->
+  <div id="bossHudWrap" class="boss-hud-wrap" style="display:none;">
+    <div class="boss-header">
+      <span id="bossIcon" class="boss-icon">👾</span>
+      <div class="boss-info">
+        <div id="bossName" class="boss-name">LEGACY MONOLITH</div>
+        <div id="bossPhase" class="boss-phase">PHASE 1/4: SPAGHETTI_CODE</div>
+      </div>
+      <span id="bossHpPercent" class="boss-hp-text">100%</span>
+    </div>
+    <div class="boss-hp-track">
+      <div id="bossHpFill" class="boss-hp-fill" style="width: 100%;"></div>
     </div>
   </div>
 
@@ -90,7 +162,7 @@
   <div id="terminal">
     <span id="prompt">&gt;</span>
     <input id="typedInput" type="text" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" placeholder="TYPE TARGET CODE NAME OR 'EMP'...">
-    <span id="terminalHint">ENTER TO FIRE</span>
+    <span id="terminalHint">AUTO-PURGE ON MATCH</span>
   </div>
 
   <!-- PAUSE MODAL -->
@@ -99,7 +171,7 @@
     <div id="gameSub" style="margin-bottom:24px;">DEFENSE GRID HALTED</div>
     <div class="btn-group-row">
       <button id="btnResume" class="btn-secondary-action">RESUME MISSION [ESC]</button>
-      <button id="btnAbort" id="retryBtn" style="border-color:var(--danger); color:var(--danger);">ABORT TO MENU</button>
+      <button id="btnAbort" class="btn-abort">ABORT TO MENU</button>
     </div>
   </div>
 
@@ -109,9 +181,160 @@
       <div id="endTitle">CORE BREACHED</div>
       <div id="goHsBanner" class="high-score-banner" style="display:none;">★ NEW HIGH SCORE ACHIEVED! ★</div>
       <div id="endStats"></div>
+
+      <!-- MISSION KEYBOARD HEATMAP & DIAGNOSTICS -->
+      <div id="endHeatmapWrap" class="heatmap-section">
+        <div class="heatmap-header">⌨️ KEYBOARD ACCURACY HEATMAP</div>
+        <div id="endKeyboardHeatmap" class="keyboard-heatmap-grid"></div>
+        <div id="endWeakKeysBanner" class="weak-keys-banner" style="display:none;"></div>
+      </div>
+
       <div class="btn-group-row">
         <button id="retryBtn">RETRY MISSION</button>
+        <button id="btnHeatmapDrill" class="btn-heatmap-drill" style="display:none;">⚡ PRACTICE WEAK KEYS</button>
         <button id="btnChangeMode" class="btn-secondary-action">SELECT MODE</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- PLAYER SWITCHER MODAL -->
+  <div id="playerModal" class="player-modal">
+    <div class="player-modal-card">
+      <h2 class="player-modal-title">OPERATOR IDENTITY MANAGEMENT</h2>
+      <div class="player-modal-sub">SELECT AVATAR & OPERATOR HANDLE</div>
+
+      <div class="player-list-label">CHOOSE AVATAR ICON:</div>
+      <div id="avatarPickerGrid" class="avatar-picker-grid"></div>
+      
+      <div class="player-input-row" style="margin-top:12px;">
+        <input id="playerHandleInput" type="text" maxlength="16" placeholder="ENTER OPERATOR TAG...">
+        <button id="btnRandomName" class="btn-random-name" title="Generate Relatable Cyber Handle">🎲 REFRESH</button>
+        <button id="btnCreatePlayer" class="btn-create-player">+ SAVE</button>
+      </div>
+
+      <div class="player-list-label">SAVED LOCAL OPERATORS:</div>
+      <div id="playerList" class="player-list"></div>
+
+      <div class="btn-group-row" style="margin-top:20px;">
+        <button id="btnClosePlayerModal" class="btn-secondary-action">CLOSE TERMINAL</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- SYSTEM SETTINGS MODAL -->
+  <div id="settingsModal" class="settings-modal">
+    <div class="settings-modal-card">
+      <h2 class="settings-modal-title">⚙️ SYSTEM CONFIGURATION</h2>
+      <div class="settings-modal-sub">CUSTOMIZE DEFENSE TERMINAL SETTINGS</div>
+
+      <div class="setting-group">
+        <label class="setting-label">TERMINAL VISUAL THEME</label>
+        <div class="theme-btn-grid">
+          <button class="btn-theme active" data-theme="cyberpunk">NEON CYBERPUNK</button>
+          <button class="btn-theme" data-theme="matrix">MATRIX GREEN</button>
+          <button class="btn-theme" data-theme="amber">RETRO AMBER</button>
+          <button class="btn-theme" data-theme="blood">BLOOD HACK</button>
+        </div>
+      </div>
+
+      <div class="setting-group">
+        <label class="setting-label">AUDIO & SOUND</label>
+        <div class="setting-row">
+          <span>SOUND EFFECTS (SFX)</span>
+          <button id="btnToggleSfx" class="btn-setting-toggle">SFX: ON</button>
+        </div>
+        <div class="setting-row">
+          <span>AMBIENT SYNTH MUSIC</span>
+          <button id="btnToggleMusic" class="btn-setting-toggle">MUSIC: ON</button>
+        </div>
+        <div class="setting-row">
+          <span>MUSIC VOLUME</span>
+          <input id="musicVolumeSlider" type="range" min="0" max="1" step="0.05" value="0.35">
+        </div>
+      </div>
+
+      <div class="setting-group">
+        <label class="setting-label">DISPLAY FILTERS</label>
+        <div class="setting-row">
+          <span>CRT SCANLINE EFFECT</span>
+          <button id="btnToggleCrtModal" class="btn-setting-toggle">CRT: ON</button>
+        </div>
+      </div>
+
+      <div class="btn-group-row" style="margin-top:20px;">
+        <button id="btnCloseSettings" class="btn-secondary-action">CLOSE SETTINGS</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- TROPHY ROOM MODAL -->
+  <div id="trophyModal" class="trophy-modal">
+    <div class="trophy-modal-card">
+      <h2 class="trophy-modal-title">🏆 OPERATOR TROPHY ROOM</h2>
+      <div class="trophy-modal-sub">UNLOCKABLE MISSION ACHIEVEMENTS & BADGES</div>
+
+      <div id="trophyGrid" class="trophy-grid"></div>
+
+      <div class="btn-group-row" style="margin-top:20px;">
+        <button id="btnCloseTrophies" class="btn-secondary-action">CLOSE TROPHY ROOM</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- CAREER STATS MODAL -->
+  <div id="statsModal" class="stats-modal">
+    <div class="stats-modal-card">
+      <h2 class="stats-modal-title">📊 OPERATOR CAREER STATS</h2>
+      <div class="stats-modal-sub">LIFETIME DEFENSE PERFORMANCE & METRICS</div>
+
+      <div id="statsGrid" class="career-stats-grid"></div>
+
+      <!-- LIFETIME KEYBOARD HEATMAP -->
+      <div id="careerHeatmapWrap" class="heatmap-section" style="margin-top:16px;">
+        <div class="heatmap-header">⌨️ LIFETIME KEYBOARD ACCURACY HEATMAP</div>
+        <div id="careerKeyboardHeatmap" class="keyboard-heatmap-grid"></div>
+      </div>
+
+      <div class="btn-group-row" style="margin-top:20px;">
+        <button id="btnCloseStats" class="btn-secondary-action">CLOSE STATS</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- CUSTOM CODE PACK CREATOR MODAL -->
+  <div id="customPackModal" class="custom-pack-modal">
+    <div class="custom-pack-card">
+      <h2 class="custom-pack-title">🛠️ CUSTOM CODE PACK CREATOR</h2>
+      <div class="custom-pack-sub">PASTE YOUR OWN CODE SNIPPETS, APIs, OR VOCABULARY</div>
+
+      <div class="custom-input-group">
+        <label class="custom-label">PACK NAME / TOPIC TAG</label>
+        <input id="customPackNameInput" type="text" maxlength="20" placeholder="E.G., MY_APP_API, JAVA_SPRING, GO_ROUTINES...">
+      </div>
+
+      <div class="custom-input-group">
+        <label class="custom-label">SOURCE CODE / RAW TEXT INPUT</label>
+        <textarea id="customPackSourceInput" rows="6" placeholder="Paste any functions, classes, code snippets, or comma/newline separated words here..."></textarea>
+      </div>
+
+      <div class="btn-group-row" style="margin-top:10px; margin-bottom:12px;">
+        <button id="btnParseCustomCode" class="btn-secondary-action">⚡ AUTO-EXTRACT & COMPILE TOKENS</button>
+      </div>
+
+      <div class="custom-preview-section">
+        <div class="preview-header">EXTRACTED TOKENS SUMMARY:</div>
+        <div id="customTokensBreakdown" class="custom-tokens-breakdown">
+          <span class="token-tier-badge">EASY (3-5): <b id="countEasy">0</b></span>
+          <span class="token-tier-badge">NORMAL (6-9): <b id="countNormal">0</b></span>
+          <span class="token-tier-badge">HARD (10+): <b id="countHard">0</b></span>
+          <span class="token-tier-badge">TOTAL: <b id="countTotal">0</b></span>
+        </div>
+        <div id="customTokensPreviewList" class="custom-tokens-preview-list"></div>
+      </div>
+
+      <div class="btn-group-row" style="margin-top:16px;">
+        <button id="btnSaveCustomPack" class="btn-create-player">+ SAVE & ACTIVATE PACK</button>
+        <button id="btnCloseCustomPackModal" class="btn-secondary-action">CANCEL</button>
       </div>
     </div>
   </div>
