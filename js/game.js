@@ -136,6 +136,7 @@
     countNormal: document.getElementById('countNormal'),
     countHard: document.getElementById('countHard'),
     countTotal: document.getElementById('countTotal'),
+    savedCustomPacksList: document.getElementById('savedCustomPacksList'),
     btnSaveCustomPack: document.getElementById('btnSaveCustomPack'),
     btnCloseCustomPackModal: document.getElementById('btnCloseCustomPackModal'),
     btnTrophies: document.getElementById('btnTrophies'),
@@ -416,12 +417,111 @@
     }
   }
 
+  let editingCustomPackKey = null;
+
+  function renderSavedCustomPacksList() {
+    if (!DOM.savedCustomPacksList) return;
+    const customKeys = Object.keys(state.customPacks);
+    if (customKeys.length === 0) {
+      DOM.savedCustomPacksList.innerHTML = '<div style="color:var(--text-dim);font-size:11px;padding:6px 0;">No saved custom packs yet. Create your first one above!</div>';
+      return;
+    }
+
+    DOM.savedCustomPacksList.innerHTML = '';
+    customKeys.forEach(packKey => {
+      const pack = state.customPacks[packKey];
+      const isActive = state.wordPack === packKey;
+      const isEditing = editingCustomPackKey === packKey;
+
+      const item = document.createElement('div');
+      item.className = 'custom-pack-item' + (isActive ? ' active' : '');
+
+      const wordCount = (pack.words && pack.words.length) || 0;
+      item.innerHTML = `
+        <div class="custom-pack-info">
+          <span class="custom-pack-name">${pack.name || packKey}</span>
+          <span class="custom-pack-count">(${wordCount} tokens)</span>
+          ${isActive ? '<span class="custom-pack-active-badge">ACTIVE</span>' : ''}
+          ${isEditing ? '<span class="custom-pack-active-badge" style="color:var(--warn);border-color:var(--warn);">EDITING</span>' : ''}
+        </div>
+        <div class="custom-pack-actions">
+          <button class="btn-pack-edit" data-pack="${packKey}">✏️ EDIT</button>
+          <button class="btn-pack-delete" data-pack="${packKey}">🗑️ DELETE</button>
+        </div>
+      `;
+
+      item.querySelector('.btn-pack-edit').addEventListener('click', (e) => {
+        e.stopPropagation();
+        editCustomPack(packKey);
+      });
+
+      item.querySelector('.btn-pack-delete').addEventListener('click', (e) => {
+        e.stopPropagation();
+        deleteCustomPack(packKey);
+      });
+
+      DOM.savedCustomPacksList.appendChild(item);
+    });
+  }
+
+  function editCustomPack(packKey) {
+    const pack = state.customPacks[packKey];
+    if (!pack) return;
+    editingCustomPackKey = packKey;
+
+    if (DOM.customPackNameInput) DOM.customPackNameInput.value = pack.label || pack.name;
+    if (DOM.customPackSourceInput) DOM.customPackSourceInput.value = (pack.words || []).join(', ');
+    if (DOM.btnSaveCustomPack) DOM.btnSaveCustomPack.textContent = `💾 UPDATE PACK: ${pack.name}`;
+
+    handleParseCustomCode();
+    renderSavedCustomPacksList();
+    if (DOM.customPackSourceInput) DOM.customPackSourceInput.focus();
+    toast(`✏️ EDITING CUSTOM PACK: ${pack.name}`, 'core');
+  }
+
+  function deleteCustomPack(packKey) {
+    const pack = state.customPacks[packKey];
+    const packName = pack ? (pack.name || packKey) : packKey;
+    if (!confirm(`Are you sure you want to delete custom pack "${packName}"?`)) return;
+
+    delete state.customPacks[packKey];
+    delete CONFIG.WORD_PACKS[packKey];
+
+    try {
+      localStorage.setItem(CONFIG.STORAGE_KEYS.CUSTOM_PACKS, JSON.stringify(state.customPacks));
+    } catch (e) {}
+
+    if (editingCustomPackKey === packKey) {
+      editingCustomPackKey = null;
+      if (DOM.customPackNameInput) DOM.customPackNameInput.value = '';
+      if (DOM.customPackSourceInput) DOM.customPackSourceInput.value = '';
+      if (DOM.btnSaveCustomPack) DOM.btnSaveCustomPack.textContent = '+ SAVE & ACTIVATE PACK';
+      handleParseCustomCode();
+    }
+
+    if (state.wordPack === packKey) {
+      setWordPack('jsts');
+    } else {
+      renderPackPills();
+    }
+
+    renderSavedCustomPacksList();
+    toast(`🗑️ CUSTOM PACK "${packName}" DELETED`, 'danger');
+  }
+
   function openCustomPackModal() {
+    editingCustomPackKey = null;
+    if (DOM.customPackNameInput) DOM.customPackNameInput.value = '';
+    if (DOM.customPackSourceInput) DOM.customPackSourceInput.value = '';
+    if (DOM.btnSaveCustomPack) DOM.btnSaveCustomPack.textContent = '+ SAVE & ACTIVATE PACK';
+    handleParseCustomCode();
+    renderSavedCustomPacksList();
     if (DOM.customPackModal) DOM.customPackModal.classList.add('show');
     if (DOM.customPackNameInput) DOM.customPackNameInput.focus();
   }
 
   function closeCustomPackModal() {
+    editingCustomPackKey = null;
     if (DOM.customPackModal) DOM.customPackModal.classList.remove('show');
   }
 
@@ -486,7 +586,11 @@
       return;
     }
 
-    const packKey = 'custom_' + rawName.toLowerCase().replace(/[^a-z0-9]/g, '_');
+    let packKey = editingCustomPackKey;
+    if (!packKey) {
+      packKey = 'custom_' + rawName.toLowerCase().replace(/[^a-z0-9]/g, '_');
+    }
+
     const newPack = {
       name: rawName.toUpperCase().slice(0, 14),
       label: rawName.toUpperCase(),
@@ -503,11 +607,13 @@
       localStorage.setItem(CONFIG.STORAGE_KEYS.CUSTOM_PACKS, JSON.stringify(state.customPacks));
     } catch (e) {}
 
+    const wasEditing = Boolean(editingCustomPackKey);
+    editingCustomPackKey = null;
     renderPackPills();
     setWordPack(packKey);
     unlockAchievement('CUSTOM_HACKER');
     closeCustomPackModal();
-    toast(`CUSTOM PACK "${newPack.name}" COMPILED & ACTIVATED!`, 'emp');
+    toast(`CUSTOM PACK "${newPack.name}" ${wasEditing ? 'UPDATED' : 'COMPILED'} & ACTIVATED!`, 'emp');
   }
 
   // -------------------------------------------------------------------
