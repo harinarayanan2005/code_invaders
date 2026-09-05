@@ -1160,7 +1160,9 @@
       boss.currentWord = nextPhase.text;
       if (boss.wordObj) {
         boss.wordObj.text = nextPhase.text;
-        boss.wordObj.el.innerHTML = `<span class="boss-subtag">${boss.name} [PHASE ${boss.phaseIndex + 1}/${boss.totalPhases}]</span><span class="boss-text">${nextPhase.text}</span>`;
+        boss.wordObj.y = Math.max(10, boss.wordObj.y - 35);
+        if (boss.wordObj.el) boss.wordObj.el.style.top = boss.wordObj.y + 'px';
+        updateWordDisplay(boss.wordObj, '');
       }
       toast(`BOSS SHIELD CRACKED! VULNERABILITY EXPOSED: ${nextPhase.text}`, 'warn');
     } else {
@@ -1305,7 +1307,11 @@
   function loseLife(w) {
     if (w.isBoss) {
       w.y = 20;
-      if (w.el) w.el.style.top = '20px';
+      w.critical = false;
+      if (w.el) {
+        w.el.style.top = '20px';
+        w.el.classList.remove('critical');
+      }
     } else {
       if (w.el && w.el.parentNode) w.el.parentNode.removeChild(w.el);
     }
@@ -1387,14 +1393,19 @@
 
     const wordsToPurge = [...state.words];
     wordsToPurge.forEach(targetWord => {
-      spawnPurgeBurst(targetWord);
-      if (targetWord.el && targetWord.el.parentNode) targetWord.el.remove();
-      state.purged++;
-      state.score += 15 + targetWord.text.length * 2;
+      if (targetWord.isBoss) {
+        damageBoss();
+      } else {
+        spawnPurgeBurst(targetWord);
+        if (targetWord.el && targetWord.el.parentNode) targetWord.el.remove();
+        state.purged++;
+        state.score += 15 + targetWord.text.length * 2;
+      }
     });
 
-    state.words = [];
+    state.words = state.words.filter(w => w.isBoss);
     DOM.input.value = '';
+    resetAllWordDisplays();
     updateHUD();
     return true;
   }
@@ -1403,16 +1414,44 @@
   // 7. INPUT & TARGETING (AUTO-PURGE & POWER-UPS)
   // -------------------------------------------------------------------
 
+  function updateWordDisplay(w, typedPrefix = '') {
+    if (!w || !w.el) return;
+    const isPrefix = typedPrefix.length > 0 && w.text.startsWith(typedPrefix);
+    w.el.classList.toggle('targeted', isPrefix);
+
+    if (w.isBoss) {
+      const boss = state.activeBoss;
+      const phaseNum = boss ? (boss.phaseIndex + 1) : 1;
+      const totalPhases = boss ? boss.totalPhases : 4;
+      const subtag = boss ? `${boss.name} [PHASE ${phaseNum}/${totalPhases}]` : 'MEGA THREAT';
+
+      if (isPrefix) {
+        w.el.innerHTML = `<span class="boss-subtag">${subtag}</span><span class="boss-text"><span class="matched">${w.text.slice(0, typedPrefix.length)}</span>${w.text.slice(typedPrefix.length)}</span>`;
+      } else {
+        w.el.innerHTML = `<span class="boss-subtag">${subtag}</span><span class="boss-text">${w.text}</span>`;
+      }
+    } else {
+      if (isPrefix) {
+        w.el.innerHTML = '<span class="matched">' + w.text.slice(0, typedPrefix.length) + '</span>' + w.text.slice(typedPrefix.length);
+      } else {
+        w.el.textContent = w.text;
+      }
+    }
+  }
+
+  function resetAllWordDisplays() {
+    for (const w of state.words) {
+      updateWordDisplay(w, '');
+    }
+  }
+
   DOM.input.addEventListener('input', () => {
     if (!state.running || state.screen !== 'PLAYING') return;
     const typed = DOM.input.value.toUpperCase();
     DOM.input.value = typed;
 
     if (!typed) {
-      for (const w of state.words) {
-        w.el.classList.remove('targeted');
-        w.el.textContent = w.text;
-      }
+      resetAllWordDisplays();
       return;
     }
 
@@ -1449,30 +1488,20 @@
       state.totalEnters++;
       fireLaser(targetWord);
 
-      // Handle power-up effects if array was not reset by BOMB
-      if (state.words.includes(targetWord)) {
+      // Handle removal for non-boss words
+      if (!targetWord.isBoss && state.words.includes(targetWord)) {
         const idx = state.words.indexOf(targetWord);
         if (idx >= 0) state.words.splice(idx, 1);
       }
 
       DOM.input.value = '';
-
-      for (const w of state.words) {
-        w.el.classList.remove('targeted');
-        w.el.textContent = w.text;
-      }
+      resetAllWordDisplays();
       return;
     }
 
     // Dynamic prefix highlighting
     for (const w of state.words) {
-      const isPrefix = typed.length > 0 && w.text.startsWith(typed);
-      w.el.classList.toggle('targeted', isPrefix);
-      if (isPrefix) {
-        w.el.innerHTML = '<span class="matched">' + w.text.slice(0, typed.length) + '</span>' + w.text.slice(typed.length);
-      } else {
-        w.el.textContent = w.text;
-      }
+      updateWordDisplay(w, typed);
     }
   });
 
@@ -1497,12 +1526,7 @@
     DOM.input.value = '';
 
     // Clear dynamic prefix highlights on all words
-    for (const w of state.words) {
-      if (w.el) {
-        w.el.classList.remove('targeted');
-        w.el.textContent = w.text;
-      }
-    }
+    resetAllWordDisplays();
 
     if (!typed) return;
 
@@ -1515,7 +1539,7 @@
     if (idx >= 0) {
       const targetWord = state.words[idx];
       fireLaser(targetWord);
-      if (state.words.includes(targetWord)) {
+      if (!targetWord.isBoss && state.words.includes(targetWord)) {
         const i = state.words.indexOf(targetWord);
         if (i >= 0) state.words.splice(i, 1);
       }
