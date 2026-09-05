@@ -736,10 +736,9 @@
     state.pool = {
       label: `DRILL [${targetChars.join(', ')}]`,
       words: drillWords,
-      spawnRate: 2200,
-      baseSpeed: 55,
-      criticalChance: 0.1,
-      maxSimultaneous: 3
+      spawn: [1400, 2000],
+      speed: [48, 70],
+      maxActiveWords: 3
     };
 
     toast(`🎯 TARGETED DRILL INITIALIZED FOR [${targetChars.join(' ')}]`, 'core');
@@ -1024,7 +1023,7 @@
         }
       }
 
-      const [lo, hi] = state.pool.spawn;
+      const [lo, hi] = (state.pool && Array.isArray(state.pool.spawn)) ? state.pool.spawn : [1400, 2000];
       const ramp = Math.max(0.45, 1 - (state.wave - 1) * 0.05);
       scheduleSpawn((lo + Math.random() * (hi - lo)) * ramp);
     }, delay);
@@ -1055,7 +1054,7 @@
     const maxX = Math.max(10, state.fieldW - w - 10);
     const x = 10 + Math.random() * maxX;
 
-    const [slo, shi] = state.pool.speed;
+    const [slo, shi] = (state.pool && Array.isArray(state.pool.speed)) ? state.pool.speed : [48, 70];
     const speed = (slo + Math.random() * (shi - slo)) * (1 + (state.wave - 1) * 0.04);
 
     el.style.left = x + 'px';
@@ -1256,6 +1255,10 @@
 
     for (let i = state.words.length - 1; i >= 0; i--) {
       const w = state.words[i];
+      if (!w || !w.el) {
+        state.words.splice(i, 1);
+        continue;
+      }
       if (!isFrozen) {
         w.y += w.speed * dt;
         w.el.style.top = w.y + 'px';
