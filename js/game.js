@@ -381,13 +381,39 @@
 
     Object.keys(CONFIG.WORD_PACKS).forEach(packKey => {
       const pack = CONFIG.WORD_PACKS[packKey];
-      const pill = document.createElement('button');
-      pill.className = 'pack-pill' + (state.wordPack === packKey ? ' active' : '');
+      const isCustom = packKey.startsWith('custom_') || Boolean(state.customPacks && state.customPacks[packKey]);
+      const pill = document.createElement('div');
+      pill.className = 'pack-pill' + (state.wordPack === packKey ? ' active' : '') + (isCustom ? ' is-custom-pill' : '');
       pill.dataset.pack = packKey;
-      pill.textContent = pack.name || packKey.toUpperCase();
-      pill.addEventListener('click', () => {
-        setWordPack(packKey);
-      });
+
+      if (isCustom) {
+        pill.innerHTML = `
+          <span class="pill-label">${pack.name || packKey.toUpperCase()}</span>
+          <span class="pill-badge">CUSTOM</span>
+          <button class="pill-action-btn pill-edit-btn" title="Edit Pack">✏️</button>
+          <button class="pill-action-btn pill-delete-btn" title="Delete Pack">×</button>
+        `;
+
+        pill.querySelector('.pill-label').addEventListener('click', () => setWordPack(packKey));
+        pill.querySelector('.pill-badge').addEventListener('click', () => setWordPack(packKey));
+
+        pill.querySelector('.pill-edit-btn').addEventListener('click', (e) => {
+          e.stopPropagation();
+          openCustomPackModal();
+          editCustomPack(packKey);
+        });
+
+        pill.querySelector('.pill-delete-btn').addEventListener('click', (e) => {
+          e.stopPropagation();
+          deleteCustomPack(packKey);
+        });
+      } else {
+        pill.textContent = pack.name || packKey.toUpperCase();
+        pill.addEventListener('click', () => {
+          setWordPack(packKey);
+        });
+      }
+
       DOM.packPillsContainer.appendChild(pill);
     });
   }
@@ -480,15 +506,18 @@
   }
 
   function deleteCustomPack(packKey) {
-    const pack = state.customPacks[packKey];
+    const pack = (state.customPacks && state.customPacks[packKey]) || (CONFIG.WORD_PACKS && CONFIG.WORD_PACKS[packKey]);
     const packName = pack ? (pack.name || packKey) : packKey;
-    if (!confirm(`Are you sure you want to delete custom pack "${packName}"?`)) return;
 
-    delete state.customPacks[packKey];
-    delete CONFIG.WORD_PACKS[packKey];
+    if (state.customPacks) {
+      delete state.customPacks[packKey];
+    }
+    if (CONFIG.WORD_PACKS) {
+      delete CONFIG.WORD_PACKS[packKey];
+    }
 
     try {
-      localStorage.setItem(CONFIG.STORAGE_KEYS.CUSTOM_PACKS, JSON.stringify(state.customPacks));
+      localStorage.setItem(CONFIG.STORAGE_KEYS.CUSTOM_PACKS, JSON.stringify(state.customPacks || {}));
     } catch (e) {}
 
     if (editingCustomPackKey === packKey) {

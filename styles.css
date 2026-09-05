@@ -1406,6 +1406,55 @@ html, body {
   box-shadow: 0 0 10px rgba(109, 232, 255, 0.3);
 }
 
+.pack-pill.is-custom-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 6px 3px 10px;
+}
+
+.pill-label {
+  cursor: pointer;
+}
+
+.pill-badge {
+  font-size: 8.5px;
+  font-weight: 800;
+  background: rgba(255, 200, 87, 0.2);
+  color: var(--warn);
+  border-radius: 3px;
+  padding: 1px 4px;
+  cursor: pointer;
+}
+
+.pill-action-btn {
+  background: transparent;
+  border: none;
+  color: var(--text-dim);
+  cursor: pointer;
+  font-size: 11px;
+  padding: 1px 4px;
+  border-radius: 3px;
+  transition: all 0.15s ease;
+  line-height: 1;
+}
+
+.pill-action-btn:hover {
+  color: #fff;
+  background: rgba(255, 255, 255, 0.15);
+  transform: scale(1.15);
+}
+
+.pill-delete-btn {
+  font-size: 14px;
+  font-weight: 900;
+}
+
+.pill-delete-btn:hover {
+  color: var(--danger) !important;
+  background: rgba(255, 77, 109, 0.3) !important;
+}
+
 /* ---------- TROPHY ROOM MODAL ---------- */
 .trophy-modal {
   display: none;
